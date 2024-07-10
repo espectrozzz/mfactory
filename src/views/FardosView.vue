@@ -28,21 +28,21 @@ const rows = ref([]);
 
 const cleanTipoFardo = () => {
   let cleanFardo = "";
-
   switch (fardo.value.toLocaleLowerCase().trim()) {
-    case "vera" || "fardo vera":
+    case "vera": case "fardo vera":
       cleanFardo = "FARDO VERA";
       break;
-    case "sp" || "fardo sp":
+    case "sp": case "fardo sp":
       cleanFardo = "FARDO SP";
       break;
-    case "yireh" || "fardo yireh":
+    case "yireh": case "fardo yireh":
       cleanFardo = "FARDO YIREH";
       break;
-      case "omega" || "fardo omega":
+      case "omega": case "fardo omega":
       cleanFardo = "FARDO OMEGA";
       break;
   }
+
   return cleanFardo;
 };
 
