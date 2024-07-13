@@ -6,6 +6,7 @@ import LoginView from "../views/LoginView.vue";
 import UsersView from "../views/UsersView.vue";
 import FardosView from "../views/FardosView.vue";
 import ReportsView from "../views/ReportsView.vue";
+import AdminView from "../views/AdminView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,17 +43,6 @@ const router = createRouter({
       },
     },
     {
-      path: "/users",
-      name: "users",
-      component: UsersView,
-      meta: {
-        title: "Usuarios",
-        authorization: true,
-        layout: false,
-        onlyAdmin: true,
-      },
-    },
-    {
       path: "/fardos",
       name: "fardos",
       component: FardosView,
@@ -69,6 +59,17 @@ const router = createRouter({
       component: ReportsView,
       meta: {
         title: "Reportes",
+        authorization: true,
+        layout: false,
+        onlyAdmin: true,
+      },
+    },
+    {
+      path: "/administrador",
+      name: "administrador",
+      component: AdminView,
+      meta: {
+        title: "Administrador",
         authorization: true,
         layout: false,
         onlyAdmin: true,
@@ -97,7 +98,7 @@ router.beforeEach(async (to, from, next) => {
     if (!isUser) {
       next({ path: "/login" });
     } else if (to.meta.onlyAdmin && !isAdmin) {
-      next({ path: "/" })
+      next({ path: "/" });
     } else next();
   } else if (to.name === "login" && isUser) {
     next({ path: "/" });
