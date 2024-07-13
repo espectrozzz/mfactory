@@ -70,21 +70,6 @@
           <li
             v-if="customClaim"
             :class="[
-              $route.path == '/users' ? 'bg-[#6B76D1]/40' : '',
-              'flex w-full items-center justify-center space-x-4 p-3 rounded-lg cursor-pointer select-none transition-all duration-300',
-            ]"
-            @click="$router.push({ name: 'users' })"
-          >
-            <div
-              class="flex space-x-2 items-center min-w-[120px] max-w-[120px]"
-            >
-              <div><UserGroupIcon class="text-white w-6 h-6" /></div>
-              <div>Colaboradores</div>
-            </div>
-          </li>
-          <li
-            v-if="customClaim"
-            :class="[
               $route.path == '/administrador' ? 'bg-[#6B76D1]/40' : '',
               'flex w-full items-center justify-center space-x-4 p-3 rounded-lg cursor-pointer select-none transition-all duration-300',
             ]"
