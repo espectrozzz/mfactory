@@ -21,7 +21,7 @@ exports.createUser = functions.firestore
       })
       .then((userRecord) => {
         admin.auth().setCustomUserClaims(userRecord.uid, {
-          admin: snap.data().rol === "admin" ? true : false,
+          rol: snap.data().rol,
         });
         admin
           .firestore()

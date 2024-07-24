@@ -3,19 +3,19 @@ import { jwtDecode } from "jwt-decode";
 import { ref } from "vue";
 
 export const useUserRol = defineStore("user", () => {
-  const customClaim = ref(false);
+  const customClaim = ref("");
 
   function setCustomClaim(token) {
-    const { admin } = jwtDecode(token);
-    customClaim.value = admin;
+    const { rol } = jwtDecode(token);
+    customClaim.value = rol;
     localStorage.setItem("token", token);
   }
 
   function getCustomClaim() {
     const token = localStorage.getItem("token");
     if (token) {
-      const { admin } = jwtDecode(token);
-      customClaim.value = admin;
+      const { rol } = jwtDecode(token);
+      customClaim.value = rol;
     }
   }
 

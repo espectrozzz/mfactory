@@ -143,6 +143,7 @@
                         </option>
                         <option value="admin">Administrador</option>
                         <option value="colaborador">Colaborador</option>
+                        <option value="reporteador">Reporteador</option>
                       </select>
                       <p v-for="error of v$.rol?.$errors" :key="error.$uid">
                         <span class="text-red-400 text-sm absolute"

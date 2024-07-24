@@ -22,6 +22,7 @@ const router = createRouter({
         authorization: true,
         layout: false,
         onlyAdmin: false,
+        authorizedRol: ["admin", "colaborador", "reporteador"],
       },
     },
     {
@@ -42,6 +43,7 @@ const router = createRouter({
         authorization: false,
         layout: true,
         onlyAdmin: false,
+        authorizedRol: ["admin", "colaborador", "reporteador"],
       },
     },
     {
@@ -53,6 +55,7 @@ const router = createRouter({
         authorization: true,
         layout: false,
         onlyAdmin: false,
+        authorizedRol: ["admin", "colaborador"],
       },
     },
     {
@@ -64,6 +67,7 @@ const router = createRouter({
         authorization: true,
         layout: false,
         onlyAdmin: false,
+        authorizedRol: ["admin", "colaborador"],
       },
     },
     {
@@ -75,6 +79,7 @@ const router = createRouter({
         authorization: true,
         layout: false,
         onlyAdmin: false,
+        authorizedRol: ["admin", "colaborador"],
       },
     },
     {
@@ -86,6 +91,7 @@ const router = createRouter({
         authorization: true,
         layout: false,
         onlyAdmin: true,
+        authorizedRol: ["admin", "reporteador"],
       },
     },
     {
@@ -96,7 +102,7 @@ const router = createRouter({
         title: "Administrador",
         authorization: true,
         layout: false,
-        onlyAdmin: true,
+        authorizedRol: ["admin"],
       },
     },
   ],
@@ -106,27 +112,28 @@ function validToken() {
   const token = localStorage.getItem("token");
   if (!token) return false;
 
-  const { admin } = jwtDecode(token);
+  const { rol } = jwtDecode(token);
 
-  return admin;
+  return rol;
 }
 
 router.beforeEach(async (to, from, next) => {
   document.title = to.meta?.title;
   const isUser = await getCurrentUser();
-  let isAdmin;
+  let rol;
   if (isUser) {
-    isAdmin = validToken();
+    rol = validToken();
+    console.log(to.meta.authorizedRol)
   }
   if (to.meta.authorization) {
     if (!isUser) {
       next({ path: "/login" });
-    } else if (to.meta.onlyAdmin && !isAdmin) {
-      next({ path: "/" });
     } else next();
   } else if (to.name === "login" && isUser) {
     next({ path: "/" });
-  } else next();
+  } else if (to.meta.authorizedRol.includes(rol)) {
+    next();
+  } else next()
 });
 
 function getCurrentUser() {
