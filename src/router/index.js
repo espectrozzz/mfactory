@@ -123,17 +123,17 @@ router.beforeEach(async (to, from, next) => {
   let rol;
   if (isUser) {
     rol = validToken();
-    console.log(to.meta.authorizedRol)
+    console.log(to.meta.authorizedRol);
   }
   if (to.meta.authorization) {
     if (!isUser) {
       next({ path: "/login" });
+    } else if (isUser && !to.meta.authorizedRol.includes(rol)) {
+      next({ name: "home" });
     } else next();
   } else if (to.name === "login" && isUser) {
     next({ path: "/" });
-  } else if (to.meta.authorizedRol.includes(rol)) {
-    next();
-  } else next()
+  } else next();
 });
 
 function getCurrentUser() {
