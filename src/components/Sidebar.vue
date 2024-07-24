@@ -39,7 +39,7 @@
             </div>
           </li>
           <li
-            v-if="customClaim"
+            v-if="customClaim === 'admin' || customClaim === 'reporteador'"
             :class="[
               $route.path == '/reportes' ? 'bg-[#6B76D1]/40' : '',
               'flex w-full items-center justify-center space-x-4 p-3 rounded-lg cursor-pointer select-none transition-all duration-300',
@@ -54,6 +54,7 @@
             </div>
           </li>
           <li
+            v-if="customClaim === 'admin' || customClaim === 'colaborador'"
             :class="[
               $route.path == '/fardos' || $route.path.includes('/fardos/') ? 'bg-[#6B76D1]/40' : '',
               'flex w-full items-center justify-center space-x-4 p-3 rounded-lg cursor-pointer select-none transition-all duration-300',
@@ -68,7 +69,7 @@
             </div>
           </li>
           <li
-            v-if="customClaim"
+            v-if="customClaim === 'admin'"
             :class="[
               $route.path == '/administrador' ? 'bg-[#6B76D1]/40' : '',
               'flex w-full items-center justify-center space-x-4 p-3 rounded-lg cursor-pointer select-none transition-all duration-300',
