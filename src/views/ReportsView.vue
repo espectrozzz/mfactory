@@ -80,9 +80,9 @@ const consultar = async () => {
 </script>
 
 <template>
-  <div class="py-10">
+  <div class="py-10 px-4 overflow-y-auto">
     <!-- Filtros -->
-    <div class="flex space-x-4 p-4 border rounded-md shadow-md">
+    <div class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 p-4 border rounded-md shadow-md">
       <!-- Fecha inicial -->
       <div class="flex flex-col">
         <label for="fechaInicial" class="text-sm text-gray-600 mb-1"
@@ -92,7 +92,7 @@ const consultar = async () => {
           type="date"
           v-model="filtros.fechaInicial"
           id="fechaInicial"
-          class="w-72 rounded-md border-gray-400 hover:bg-gray-100"
+          class="lg:w-72 rounded-md border-gray-400 hover:bg-gray-100"
           placeholder="Fecha inicial"
         />
       </div>
@@ -105,7 +105,7 @@ const consultar = async () => {
           type="date"
           v-model="filtros.fechaFinal"
           id="fechaFinal"
-          class="w-72 rounded-md border-gray-400 hover:bg-gray-100"
+          class="lg:w-72 rounded-md border-gray-400 hover:bg-gray-100"
           placeholder="Fecha final"
         />
       </div>

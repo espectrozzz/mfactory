@@ -1,9 +1,9 @@
 <template>
-  <div class="flex justify-around">
+  <div class="flex flex-col lg:flex-row space-y-6 lg:space-y-0 justify-around">
     <svg ref="barcode" class="hidden"></svg>
     <div>
       <div
-        class="flex flex-col space-y-6 border-2 p-6 w-96 max-w-96 h-60 rounded-md shadow-md relative"
+        class="flex flex-col space-y-6 border-2 p-6 lg:w-96 max-w-96 h-60 rounded-md shadow-md relative"
       >
         <label for="tipoDeFardo" class="text-lg">Nuevo tipo de fardo</label>
 
