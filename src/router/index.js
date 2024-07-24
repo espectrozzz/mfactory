@@ -7,6 +7,8 @@ import UsersView from "../views/UsersView.vue";
 import FardosView from "../views/FardosView.vue";
 import ReportsView from "../views/ReportsView.vue";
 import AdminView from "../views/AdminView.vue";
+import FardosIn from "@/components/FardosIn.vue";
+import FardosOut from "@/components/FardosOut.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -39,6 +41,28 @@ const router = createRouter({
         title: "Login",
         authorization: false,
         layout: true,
+        onlyAdmin: false,
+      },
+    },
+    {
+      path: "/fardos/entradas",
+      name: "fardos-entradas",
+      component: FardosIn,
+      meta: {
+        title: "Entradas",
+        authorization: true,
+        layout: false,
+        onlyAdmin: false,
+      },
+    },
+    {
+      path: "/fardos/salidas",
+      name: "fardos-salidas",
+      component: FardosOut,
+      meta: {
+        title: "Salidas",
+        authorization: true,
+        layout: false,
         onlyAdmin: false,
       },
     },
