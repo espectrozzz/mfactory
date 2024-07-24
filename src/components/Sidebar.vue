@@ -55,7 +55,7 @@
           </li>
           <li
             :class="[
-              $route.path == '/fardos' ? 'bg-[#6B76D1]/40' : '',
+              $route.path == '/fardos' || $route.path.includes('/fardos/') ? 'bg-[#6B76D1]/40' : '',
               'flex w-full items-center justify-center space-x-4 p-3 rounded-lg cursor-pointer select-none transition-all duration-300',
             ]"
             @click="$router.push({ name: 'fardos' })"
