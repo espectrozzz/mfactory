@@ -1,5 +1,5 @@
 <template>
-  <div class="w-screen h-screen px-4 lg:px-0 md:px-0">
+  <div class="w-screen h-screen p-6 lg:p-0 md:p-0">
     <div class="flex w-full h-full">
       <!-- Imagen portada -->
       <div

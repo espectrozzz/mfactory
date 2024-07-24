@@ -1,5 +1,5 @@
 <template>
-  <div class="py-10">
+  <div class="py-10 px-6 lg:px-0">
     <div class="py-4">
       <button type="button" @click="$router.push({ 'name': 'fardos' })" class="inline-flex justify-center items-center cursor-pointer"><ArrowLeftIcon class="w-5 h-5 mr-2" /> Regresar</button>
     </div>
@@ -35,7 +35,7 @@
     <div class="mt-6">
       <TableComponent :columns="columns" :rows="rows" />
     </div>
-    <div>
+    <div class="mt-6 lg:mt-0">
       <button
         @click="enviarFardos"
         type="button"

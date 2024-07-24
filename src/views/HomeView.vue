@@ -35,13 +35,13 @@ const chartDataMensual = reactive({
 });
 
 const chartOptions = reactive({
-  responsive: true,
+  responsive: false,
 });
 </script>
 
 <template>
-  <div class="py-10 grid grid-cols-2 gap-10">
-    <div>
+  <div class="py-10 px-4 lg:px-0 flex flex-col lg:flex-row justify-between lg:justify-around space-y-6 lg:space-y-0">
+    <div class="">
       <Bar id="my-chart-id" :options="chartOptions" :data="chartDataSemanal" />
     </div>
     <div>

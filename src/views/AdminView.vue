@@ -8,7 +8,7 @@ const categories = ref(["Colaboradores", "Tipos de fardos"]);
 </script>
 
 <template>
-  <div class="py-10">
+  <div class="py-10 px-4 lg:px-0">
     <TabGroup>
       <TabList class="flex space-x-1 rounded-xl bg-gray-300 p-1">
         <Tab

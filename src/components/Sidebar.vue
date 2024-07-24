@@ -98,7 +98,6 @@ import IconReport from "./icons/IconReport.vue";
 import {
   CogIcon,
   UserIcon,
-  UserGroupIcon,
   ArchiveBoxIcon,
 } from "@heroicons/vue/24/outline";
 import { useUserRol } from "@/stores/user";

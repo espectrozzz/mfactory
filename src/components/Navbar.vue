@@ -1,8 +1,8 @@
 <template>
-    <div class="w-full h-full pr-44 pl-8 lg:p-0 md:p-0">
+    <div class="w-full h-full pr-5 lg:pr-44 pl-8 lg:p-0 md:p-0">
       <div class="flex items-center justify-between lg:px-24 md:px-24 w-full h-full">
         <!-- logo -->
-        <div class="lg:w-[70%] md:lg:w-[70%] w-[70%]">
+        <div class="lg:w-[70%] md:lg:w-[70%] w-[60%]">
           <img src="/src/assets/img/logo_negativo.png" width="120" />
         </div>
         <!-- Menu -->
