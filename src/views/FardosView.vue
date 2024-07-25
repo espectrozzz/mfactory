@@ -5,6 +5,7 @@ import {
   PaperAirplaneIcon,
 } from "@heroicons/vue/24/outline";
 import FardosInventoryTable from "@/components/FardosInventoryTable.vue";
+import FardosInventoryTableSuspense from "@/components/suspense/FardosInventoryTableSuspense.vue";
 </script>
 
 <template>
@@ -31,6 +32,9 @@ import FardosInventoryTable from "@/components/FardosInventoryTable.vue";
     <div class="mt-12 px-0 lg:px-28">
       <Suspense>
         <FardosInventoryTable />
+        <template #fallback>
+          <FardosInventoryTableSuspense />
+        </template>
       </Suspense>
     </div>
   </div>
