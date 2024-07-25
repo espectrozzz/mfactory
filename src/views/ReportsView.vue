@@ -10,16 +10,13 @@ const filtros = reactive({
   fechaFinal: "",
 });
 
-const json_fields = {
-  "#": "id",
-  "Tipo de fardo": "tipoFardo",
-  Colaborador: "colaborador",
-  Fecha: "fecha",
-};
+const tipoReporte = ref("");
 
+const json_fields = ref({});
+const disableFechas = ref(true);
 const json_data = ref([]);
 
-const columns = ["#", "Tipo de fardo", "Colaborador", "Fecha/hora escaneo"];
+const columns = ref(["", "", ""]);
 const rows = ref([]);
 
 const convertDate = (timestamp) => {
@@ -35,17 +32,71 @@ const convertDate = (timestamp) => {
 };
 
 const consultar = async () => {
-  if (!filtros.fechaInicial || !filtros.fechaFinal) {
-    alert("Se deben colocar los rangos de fecha.");
+  if (tipoReporte.value === "") {
+    alert("Se debe de escoger el tipo de reporte.");
     return false;
   }
 
   rows.value = [];
+  json_fields.value = [];
+  json_data.value = [];
+  const date1 = new Date(`${filtros.fechaInicial} 00:00:00`);
+  const date2 = new Date(`${filtros.fechaFinal} 23:59:59`);
+
+  switch (tipoReporte.value) {
+    case "inventario":
+      await getInventario();
+      break;
+    case "entradaInventario":
+      if (!filtros.fechaInicial || !filtros.fechaFinal) {
+        alert("Se deben colocar los rangos de fecha.");
+        return false;
+      }
+      await getEntradaInventario();
+      break;
+    case "salidaInventario":
+      if (!filtros.fechaInicial || !filtros.fechaFinal) {
+        alert("Se deben colocar los rangos de fecha.");
+        return false;
+      }
+      await getSalidaInventario();
+      break;
+    case "todo":
+      if (!filtros.fechaInicial || !filtros.fechaFinal) {
+        alert("Se deben colocar los rangos de fecha.");
+        return false;
+      }
+      break;
+  }
+};
+
+const analizarTipoReporte = () => {
+  switch (tipoReporte.value) {
+    case "inventario":
+      filtros.fechaInicial = "";
+      filtros.fechaFinal = "";
+      disableFechas.value = true;
+      break;
+    case "entradaInventario":
+      disableFechas.value = false;
+      break;
+    case "salidaInventario":
+      disableFechas.value = false;
+      break;
+    case "todo":
+      disableFechas.value = false;
+      break;
+  }
+};
+
+// Obtener los movimientos de entrada de inventario
+
+const getEntradaInventario = async () => {
   const date1 = new Date(`${filtros.fechaInicial} 00:00:00`);
   const date2 = new Date(`${filtros.fechaFinal} 23:59:59`);
 
   const q = query(
-    collection(db, "fardos"),
+    collection(db, "entradas"),
     where("creado", ">=", date1),
     where("creado", "<=", date2)
   );
@@ -53,9 +104,19 @@ const consultar = async () => {
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
-    alert("No se encontraron fardos");
+    alert("No se encontraron registros de entrada.");
     return false;
   }
+
+  columns.value = ["#", "Tipo de fardo", "Colaborador", "Fecha/hora escaneo", "Movimiento"];
+
+  json_fields.value = {
+    "#": "id",
+    "Tipo de fardo": "tipoFardo",
+    Colaborador: "colaborador",
+    Fecha: "fecha",
+    Movimiento: "movimiento"
+  };
 
   querySnapshot.forEach((doc) => {
     for (let fardo in doc.data().data) {
@@ -66,6 +127,7 @@ const consultar = async () => {
           { type: "text", content: doc.data().data[fardo].tipoFardo },
           { type: "text", content: doc.data().colaborador },
           { type: "date", content: doc.data().creado.toDate() },
+          { type: "text", content: 'Entrada' },
         ],
       });
       json_data.value.push({
@@ -73,16 +135,134 @@ const consultar = async () => {
         tipoFardo: doc.data().data[fardo].tipoFardo,
         colaborador: doc.data().colaborador,
         fecha: convertDate(doc.data().creado.toDate()),
+        movimiento: 'Entrada'
       });
     }
   });
+};
+
+// Obtener los movimientos de salida de inventario
+
+const getSalidaInventario = async () => {
+  const date1 = new Date(`${filtros.fechaInicial} 00:00:00`);
+  const date2 = new Date(`${filtros.fechaFinal} 23:59:59`);
+
+  const q = query(
+    collection(db, "salidas"),
+    where("creado", ">=", date1),
+    where("creado", "<=", date2)
+  );
+
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    alert("No se encontraron registros de salida.");
+    return false;
+  }
+
+  columns.value = ["#", "Tipo de fardo", "Colaborador", "Fecha/hora escaneo", "Movimiento"];
+
+  json_fields.value = {
+    "#": "id",
+    "Tipo de fardo": "tipoFardo",
+    Colaborador: "colaborador",
+    Fecha: "fecha",
+    Movimiento: "movimiento"
+  };
+
+  querySnapshot.forEach((doc) => {
+    for (let fardo in doc.data().data) {
+      rows.value.push({
+        id: rows.value.length + 1,
+        data: [
+          { type: "text", content: rows.value.length + 1 },
+          { type: "text", content: doc.data().data[fardo].tipoFardo },
+          { type: "text", content: doc.data().colaborador },
+          { type: "date", content: doc.data().creado.toDate() },
+          { type: "text", content: 'Salida' },
+        ],
+      });
+      json_data.value.push({
+        id: rows.value.length,
+        tipoFardo: doc.data().data[fardo].tipoFardo,
+        colaborador: doc.data().colaborador,
+        fecha: convertDate(doc.data().creado.toDate()),
+        movimiento: 'Salida'
+      });
+    }
+  });
+};
+
+// Obtener el inventario
+const getInventario = async () => {
+  const snapshot = await getDocs(collection(db, "inventory"));
+
+  if (!snapshot.empty) {
+    columns.value = ["#", "Tipo de fardo", "Stock", "Ultima actualización"];
+    snapshot.forEach((value) => {
+      console.log(value.id);
+      rows.value.push({
+        id: rows.value.length + 1,
+        data: [
+          { type: "text", content: rows.value.length + 1 },
+          { type: "text", content: value.id },
+          { type: "text", content: value.data().value },
+          {
+            type: "date",
+            content: value.data().hasOwnProperty("updated_at")
+              ? value.data().updated_at.toDate()
+              : "",
+          },
+        ],
+      });
+      // Preparar datos para exportar a excel
+      json_fields.value = {
+        "#": "id",
+        "Tipo de fardo": "tipoFardo",
+        Stock: "stock",
+        "Fecha ultima actualizacion": "fecha",
+      };
+      json_data.value.push({
+        id: rows.value.length,
+        tipoFardo: value.id,
+        stock: value.data().value,
+        fecha: value.data().hasOwnProperty("updated_at")
+          ? convertDate(value.data()?.updated_at.toDate())
+          : "",
+      });
+    });
+  }
 };
 </script>
 
 <template>
   <div class="py-10 px-4 overflow-y-auto">
     <!-- Filtros -->
-    <div class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 p-4 border rounded-md shadow-md">
+    <div
+      class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 p-4 border rounded-md shadow-md"
+    >
+      <!-- Tipo reporte -->
+      <div class="flex flex-col">
+        <label for="tipoReporte" class="text-sm text-gray-600 mb-1"
+          >Tipo de reporte</label
+        >
+        <select
+          v-model="tipoReporte"
+          @change="analizarTipoReporte"
+          id="tipoReporte"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        >
+          <option value="" selected disabled>Escoge un tipo de reporte</option>
+          <option value="inventario" selected>Inventario</option>
+          <option value="salidaInventario" selected>
+            Salida de inventario
+          </option>
+          <option value="entradaInventario" selected>
+            Entrada de inventario
+          </option>
+          <option value="todo" selected>Todo</option>
+        </select>
+      </div>
       <!-- Fecha inicial -->
       <div class="flex flex-col">
         <label for="fechaInicial" class="text-sm text-gray-600 mb-1"
@@ -92,7 +272,11 @@ const consultar = async () => {
           type="date"
           v-model="filtros.fechaInicial"
           id="fechaInicial"
-          class="lg:w-72 rounded-md border-gray-400 hover:bg-gray-100"
+          :disabled="disableFechas"
+          :class="[
+            'lg:w-72 rounded-md border-gray-400 hover:bg-gray-100',
+            disableFechas ? 'bg-gray-100 cursor-not-allowed' : 'bg-transparent',
+          ]"
           placeholder="Fecha inicial"
         />
       </div>
@@ -105,10 +289,15 @@ const consultar = async () => {
           type="date"
           v-model="filtros.fechaFinal"
           id="fechaFinal"
-          class="lg:w-72 rounded-md border-gray-400 hover:bg-gray-100"
+          :disabled="disableFechas"
+          :class="[
+            'lg:w-72 rounded-md border-gray-400 hover:bg-gray-100',
+            disableFechas ? 'bg-gray-100 cursor-not-allowed' : 'bg-transparent',
+          ]"
           placeholder="Fecha final"
         />
       </div>
+
       <div class="flex items-end">
         <button
           type="button"
@@ -135,7 +324,8 @@ const consultar = async () => {
     <!-- Table -->
     <div class="mt-12">
       <div class="flex justify-end mb-2">
-        <span class="mr-2">Datos encontrados:</span> <strong>{{ rows.length }}</strong>
+        <span class="mr-2">Datos encontrados:</span>
+        <strong>{{ rows.length }}</strong>
       </div>
       <TableComponent :columns="columns" :rows="rows" />
     </div>
