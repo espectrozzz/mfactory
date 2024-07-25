@@ -9,6 +9,7 @@
 
         <input
           v-model="tipoDeFardo"
+          @keyup.enter="guardarTipoFardo"
           type="text"
           class="w-full rounded-md border-gray-400 hover:bg-gray-100"
           name="tipoDeFardo"
@@ -17,10 +18,11 @@
         <button
           type="button"
           @click="guardarTipoFardo"
-          class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-md"
+          class="bg-blue-500 relative hover:bg-blue-400 text-white px-4 py-2 rounded-md min-h-10 max-h-10"
           id="guardar"
         >
-          Guardar
+          <IconSpinner :isLoading="loading" />
+           <span v-show="!loading">Guardar</span>
         </button>
         <div class="absolute bottom-2 left-0">
           <MessageState :is-show="isSuccess"
@@ -42,16 +44,28 @@
             <p :title="item.name">{{ item.name }}</p>
           </div>
           <div class="flex space-x-2">
-            <button type="button" @click="exportToPDF(item.name)" title="Generar Ticket en PDF">
-                <TicketIcon class="w-5 h-5" />
+            <button
+              type="button"
+              @click="exportToPDF(item.name)"
+              title="Generar Ticket en PDF"
+            >
+              <TicketIcon class="w-5 h-5" />
             </button>
-            <button type="button" @click="eliminarFardo(item.id)" title="Eliminar fardo">
+            <button
+              type="button"
+              @click="eliminarFardo(item.id)"
+              title="Eliminar fardo"
+            >
               <TrashIcon class="w-5 h-5 text-red-500" />
             </button>
           </div>
         </li>
       </ul>
-      <MessageState class="absolute bottom-2 inset-x-7 m-auto w-48" :is-show="isSuccessDelete">Fardo eliminado</MessageState>
+      <MessageState
+        class="absolute bottom-2 inset-x-7 m-auto w-48"
+        :is-show="isSuccessDelete"
+        >Fardo eliminado</MessageState
+      >
     </div>
   </div>
 </template>
@@ -68,12 +82,13 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
-  query
+  query,
 } from "firebase/firestore";
 import MessageState from "./MessageState.vue";
 import Barcode from "./Barcode.vue";
 import JsBarcode from "jsbarcode";
 import jsPDF from "jspdf";
+import IconSpinner from "./icons/IconSpinner.vue";
 
 const tipoDeFardo = ref("");
 const listaTipoDeFardos = ref([]);
@@ -82,6 +97,7 @@ const isSuccessDelete = ref(false);
 const ean13Code = ref("1234567890128");
 const barcode = ref(null);
 const q = query(collection(db, "tiposDeFardos"));
+const loading = ref(false);
 
 const fetchData = async () => {
   listaTipoDeFardos.value = [];
@@ -98,8 +114,7 @@ const fetchData = async () => {
 
 onSnapshot(q, (querySnapshot) => {
   fetchData();
-})
-
+});
 
 const generateBarcode = (tipoDeFardo) => {
   if (barcode.value) {
@@ -108,15 +123,15 @@ const generateBarcode = (tipoDeFardo) => {
 };
 
 const eliminarFardo = async (docId) => {
-  console.log("docId", docId)
+  console.log("docId", docId);
   await deleteDoc(doc(db, "tiposDeFardos", docId)).then(() => {
     isSuccessDelete.value = true;
     setTimeout(() => {
-      isSuccessDelete.value = false
-    }, 5000)
-  })
-}
- 
+      isSuccessDelete.value = false;
+    }, 5000);
+  });
+};
+
 const exportToPDF = (tipoDeFardo) => {
   generateBarcode(tipoDeFardo);
   const svgElement = barcode.value;
@@ -149,25 +164,29 @@ const exportToPDF = (tipoDeFardo) => {
 };
 
 const guardarTipoFardo = async () => {
+  loading.value = true;
   if (tipoDeFardo.value === "" || tipoDeFardo.value.length < 6) {
     alert("El tipo de fardo no está permitido.");
     return false;
+    loading.value = false;
   }
 
   try {
     const docRef = await addDoc(collection(db, "tiposDeFardos"), {
-      name: tipoDeFardo.value,
+      name: tipoDeFardo.value.toUpperCase().trim().replace("/", ""),
       uid: auth.currentUser.uid,
       userName: auth.currentUser.displayName,
       created_at: serverTimestamp(),
     });
     tipoDeFardo.value = "";
     isSuccess.value = true;
+    loading.value = false;
     setTimeout(() => {
       isSuccess.value = false;
     }, 5000);
   } catch (error) {
     console.log("error al guardar el tipo de fardo", error);
+    loading.value = false;
   }
 };
 </script>

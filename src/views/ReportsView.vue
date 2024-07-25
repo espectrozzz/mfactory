@@ -260,7 +260,6 @@ const getInventario = async () => {
           <option value="entradaInventario" selected>
             Entrada de inventario
           </option>
-          <option value="todo" selected>Todo</option>
         </select>
       </div>
       <!-- Fecha inicial -->
