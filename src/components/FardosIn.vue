@@ -16,6 +16,7 @@
         id="scanner"
         :disabled="isLoading"
         autofocus
+        tabindex="0"
       />
       <button
         @click="agregarFardo"

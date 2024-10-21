@@ -167,8 +167,8 @@ const guardarTipoFardo = async () => {
   loading.value = true;
   if (tipoDeFardo.value === "" || tipoDeFardo.value.length < 6) {
     alert("El tipo de fardo no está permitido.");
-    return false;
     loading.value = false;
+    return false;
   }
 
   try {

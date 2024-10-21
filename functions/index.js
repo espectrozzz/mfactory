@@ -1,10 +1,17 @@
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const crypto = require("crypto");
-const { increment } = require("firebase/firestore");
 const { FieldValue } = require("firebase-admin/firestore");
 
 admin.initializeApp();
+
+/*
+exports.initApp = functions.auth.user().onCreate((user) => {
+  admin.auth().setCustomUserClaims(user.uid, {
+    rol: "admin"
+  })
+})
+*/
 
 exports.createUser = functions.firestore
   .document("colaboradores/{docId}")

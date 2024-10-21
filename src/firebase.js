@@ -4,12 +4,12 @@ import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDal8-pYCVDPzK7CM7GHKY7iBscnE2HWJo",
-  authDomain: "mfactory-68974.firebaseapp.com",
-  projectId: "mfactory-68974",
-  storageBucket: "mfactory-68974.appspot.com",
-  messagingSenderId: "991783660349",
-  appId: "1:991783660349:web:59b46bd9c088c17b693354",
+  apiKey: "AIzaSyB4LHzdT6ijbtVwNxniUcL4rwRiHbxKevU",
+  authDomain: "mfactory-ede9a.firebaseapp.com",
+  projectId: "mfactory-ede9a",
+  storageBucket: "mfactory-ede9a.appspot.com",
+  messagingSenderId: "36006178748",
+  appId: "1:36006178748:web:6c096f84920481467f85b9"
 };
 
 const app = initializeApp(firebaseConfig);
