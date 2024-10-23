@@ -9,7 +9,8 @@
         <ArrowLeftIcon class="w-5 h-5 mr-2" /> Regresar
       </button>
     </div>
-    <div class="flex space-x-6">
+
+    <div class="flex space-x-6 max-h-11 items-center">
       <input
         v-model="fardo"
         @keyup.enter="agregarFardo"
@@ -27,7 +28,7 @@
         @click="agregarFardo"
         type="button"
         :class="[
-          'bg-blue-500 hover:bg-blue-400 text-white px-4 rounded-md',
+          'bg-blue-500 hover:bg-blue-400 text-white px-4 rounded-md h-9',
           isLoading ? 'cursor-not-allowed' : '',
         ]"
         :disabled="isLoading"
@@ -35,6 +36,21 @@
       >
         Agregar
       </button>
+      <div class="flex items-center space-x-4">
+        <label for="countries" class="text-sm text-gray-600 mb-1 font-semibold"
+          >País destino</label
+        >
+        <CountrySelectSuspense v-if="loadingCountries" />
+        <select
+          v-else
+          v-model="country"
+          id="countries"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        >
+          <option value="" disabled selected>Seleccionar país</option>
+          <option v-for="country in countriesList" :value="country">{{ country }}</option>
+        </select>
+      </div>
       <MessageState :isShow="success">Se guardó correctamente</MessageState>
     </div>
     <!-- Table -->
@@ -70,11 +86,15 @@ import { ArrowLeftIcon } from "@heroicons/vue/24/outline";
 import TableComponent from "@/components/TableComponent.vue";
 import IconSpinner from "@/components/icons/IconSpinner.vue";
 import MessageState from "@/components/MessageState.vue";
+import CountrySelectSuspense from "@/components/suspense/CountrySelectSuspense.vue"
 
 const fardo = ref("");
 const isLoading = ref(false);
 const data = ref([]);
 const success = ref(false);
+const countriesList = ref([]);
+const country = ref("")
+const loadingCountries = ref(true);
 
 const columns = [
   "#",
@@ -82,7 +102,7 @@ const columns = [
   "Colaborador",
   "Fecha/hora escaneo",
   "Cantidad",
-  "Stock disponible"
+  "Stock disponible",
 ];
 
 const tipoFardos = ref([]);
@@ -91,8 +111,8 @@ const rows = ref([]);
 
 const cleanTipoFardo = () => {
   let cleanFardo = "";
-  
-  cleanFardo = fardo.value.toUpperCase().trim()
+
+  cleanFardo = fardo.value.toUpperCase().trim();
 
   return cleanFardo;
 };
@@ -180,11 +200,15 @@ const enviarFardos = async () => {
     isLoading.value = false;
     return false;
   }
+  if(!country.value) {
+    alert("Escoger el país de destino")
+  }
 
   const docRef = await addDoc(collection(db, "salidas"), {
     colaborador: auth.currentUser.displayName,
     uid: auth.currentUser.uid,
     data: data.value,
+    destiny: country.value,
     creado: serverTimestamp(),
   });
 
@@ -208,6 +232,20 @@ const fetchTipoFardos = async () => {
   }
 };
 
+const fetchCountries = async () => {
+  const countriesRef = collection(db, "countries");
+
+  const snapshot = await getDocs(countriesRef);
+
+  if (!snapshot.empty) {
+    snapshot.forEach((country) => {
+      countriesList.value.push(country.data().name);
+    });
+  }
+
+  loadingCountries.value = false;
+};
+
 const validarExistencia = (docSnap) => {
   if (docSnap.data().value === 0) {
     return false;
@@ -229,5 +267,6 @@ const validarCantidadDisponible = (docSnap) => {
 
 onMounted(() => {
   fetchTipoFardos();
+  fetchCountries();
 });
 </script>
