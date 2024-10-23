@@ -3,8 +3,9 @@ import { ref } from "vue";
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@headlessui/vue";
 import Colaboradores from "@/components/Colaboradores.vue";
 import TiposDeFardos from "@/components/TiposDeFardos.vue";
+import CountriesComponent from "@/components/CountriesComponent.vue";
 
-const categories = ref(["Colaboradores", "Tipos de fardos"]);
+const categories = ref(["Colaboradores", "Tipos de fardos", "Paises"]);
 </script>
 
 <template>
@@ -48,6 +49,16 @@ const categories = ref(["Colaboradores", "Tipos de fardos"]);
         >
           <Suspense>
             <TiposDeFardos />
+          </Suspense>
+        </TabPanel>
+        <TabPanel
+          :class="[
+            'rounded-xl bg-white p-3',
+            'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none ',
+          ]"
+        >
+          <Suspense>
+            <CountriesComponent />
           </Suspense>
         </TabPanel>
       </TabPanels>
