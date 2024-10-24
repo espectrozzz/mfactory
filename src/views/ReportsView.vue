@@ -1,8 +1,9 @@
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { db } from "../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import TableComponent from "@/components/TableComponent.vue";
+import CountrySelectSuspense from "@/components/suspense/CountrySelectSuspense.vue";
 import moment from "moment";
 
 const filtros = reactive({
@@ -19,6 +20,10 @@ const json_data = ref([]);
 const columns = ref(["", "", ""]);
 const rows = ref([]);
 
+const country = ref("");
+const countriesList = ref([]);
+const loadingCountries = ref(true);
+
 const convertDate = (timestamp) => {
   let formatDate;
   if (timestamp) {
@@ -29,6 +34,20 @@ const convertDate = (timestamp) => {
   }
 
   return formatDate;
+};
+
+const fetchCountries = async () => {
+  const countriesRef = collection(db, "countries");
+
+  const snapshot = await getDocs(countriesRef);
+
+  if (!snapshot.empty) {
+    snapshot.forEach((country) => {
+      countriesList.value.push(country.data().name);
+    });
+  }
+
+  loadingCountries.value = false;
 };
 
 const consultar = async () => {
@@ -108,14 +127,20 @@ const getEntradaInventario = async () => {
     return false;
   }
 
-  columns.value = ["#", "Tipo de fardo", "Colaborador", "Fecha/hora escaneo", "Movimiento"];
+  columns.value = [
+    "#",
+    "Tipo de fardo",
+    "Colaborador",
+    "Fecha/hora escaneo",
+    "Movimiento",
+  ];
 
   json_fields.value = {
     "#": "id",
     "Tipo de fardo": "tipoFardo",
     Colaborador: "colaborador",
     Fecha: "fecha",
-    Movimiento: "movimiento"
+    Movimiento: "movimiento",
   };
 
   querySnapshot.forEach((doc) => {
@@ -127,7 +152,7 @@ const getEntradaInventario = async () => {
           { type: "text", content: doc.data().data[fardo].tipoFardo },
           { type: "text", content: doc.data().colaborador },
           { type: "date", content: doc.data().creado.toDate() },
-          { type: "text", content: 'Entrada' },
+          { type: "text", content: "Entrada" },
         ],
       });
       json_data.value.push({
@@ -135,7 +160,7 @@ const getEntradaInventario = async () => {
         tipoFardo: doc.data().data[fardo].tipoFardo,
         colaborador: doc.data().colaborador,
         fecha: convertDate(doc.data().creado.toDate()),
-        movimiento: 'Entrada'
+        movimiento: "Entrada",
       });
     }
   });
@@ -150,7 +175,8 @@ const getSalidaInventario = async () => {
   const q = query(
     collection(db, "salidas"),
     where("creado", ">=", date1),
-    where("creado", "<=", date2)
+    where("creado", "<=", date2),
+    where("destiny", country.value ? "==" : "!=", country.value ? country.value : "")
   );
 
   const querySnapshot = await getDocs(q);
@@ -160,14 +186,24 @@ const getSalidaInventario = async () => {
     return false;
   }
 
-  columns.value = ["#", "Tipo de fardo", "Colaborador", "Fecha/hora escaneo", "Movimiento"];
+  columns.value = [
+    "#",
+    "Tipo de fardo",
+    "Colaborador",
+    "Cantidad",
+    "Destino",
+    "Fecha/hora escaneo",
+    "Movimiento",
+  ];
 
   json_fields.value = {
     "#": "id",
     "Tipo de fardo": "tipoFardo",
     Colaborador: "colaborador",
+    Cantidad: "cantidad",
+    Destino: "destino",
     Fecha: "fecha",
-    Movimiento: "movimiento"
+    Movimiento: "movimiento",
   };
 
   querySnapshot.forEach((doc) => {
@@ -178,16 +214,20 @@ const getSalidaInventario = async () => {
           { type: "text", content: rows.value.length + 1 },
           { type: "text", content: doc.data().data[fardo].tipoFardo },
           { type: "text", content: doc.data().colaborador },
+          { type: "text", content: doc.data().data[fardo].value },
+          { type: "text", content: doc.data().destiny },
           { type: "date", content: doc.data().creado.toDate() },
-          { type: "text", content: 'Salida' },
+          { type: "text", content: "Salida" },
         ],
       });
       json_data.value.push({
         id: rows.value.length,
         tipoFardo: doc.data().data[fardo].tipoFardo,
         colaborador: doc.data().colaborador,
+        cantidad: doc.data().data[fardo].value,
+        colaborador: doc.data().destiny,
         fecha: convertDate(doc.data().creado.toDate()),
-        movimiento: 'Salida'
+        movimiento: "Salida",
       });
     }
   });
@@ -233,91 +273,124 @@ const getInventario = async () => {
     });
   }
 };
+
+onMounted(() => {
+  fetchCountries();
+});
 </script>
 
 <template>
   <div class="py-10 px-4 overflow-y-auto">
     <!-- Filtros -->
-    <div
-      class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 p-4 border rounded-md shadow-md"
-    >
-      <!-- Tipo reporte -->
-      <div class="flex flex-col">
-        <label for="tipoReporte" class="text-sm text-gray-600 mb-1"
-          >Tipo de reporte</label
-        >
-        <select
-          v-model="tipoReporte"
-          @change="analizarTipoReporte"
-          id="tipoReporte"
-          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        >
-          <option value="" selected disabled>Escoge un tipo de reporte</option>
-          <option value="inventario" selected>Inventario</option>
-          <option value="salidaInventario" selected>
-            Salida de inventario
-          </option>
-          <option value="entradaInventario" selected>
-            Entrada de inventario
-          </option>
-        </select>
+    <div class="flex flex-col space-y-4 p-4 border rounded-md shadow-md">
+      <div class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-6 lg:w-3/4">
+        <!-- Tipo reporte -->
+        <div class="flex w-full lg:w-1/3 flex-col">
+          <label for="tipoReporte" class="text-sm text-gray-600 mb-1"
+            >Tipo de reporte</label
+          >
+          <select
+            v-model="tipoReporte"
+            @change="analizarTipoReporte"
+            id="tipoReporte"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          >
+            <option value="" selected disabled>
+              Escoge un tipo de reporte
+            </option>
+            <option value="inventario" selected>Inventario</option>
+            <option value="salidaInventario" selected>
+              Salida de inventario
+            </option>
+            <option value="entradaInventario" selected>
+              Entrada de inventario
+            </option>
+          </select>
+        </div>
+        <div class="flex w-full lg:w-1/3 flex-col">
+          <label
+            for="countries"
+            class="text-sm text-gray-600 mb-1 font-semibold"
+            >País destino</label
+          >
+          <CountrySelectSuspense v-if="loadingCountries" />
+          <select
+            v-else
+            :disabled="disableFechas || tipoReporte === 'entradaInventario'"
+            v-model="country"
+            id="countries"
+            class="bg-gray-50 border border-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          >
+            <option value="" selected>TODOS</option>
+            <option v-for="country in countriesList" :value="country">
+              {{ country }}
+            </option>
+          </select>
+        </div>
       </div>
-      <!-- Fecha inicial -->
-      <div class="flex flex-col">
-        <label for="fechaInicial" class="text-sm text-gray-600 mb-1"
-          >Fecha inicial</label
-        >
-        <input
-          type="date"
-          v-model="filtros.fechaInicial"
-          id="fechaInicial"
-          :disabled="disableFechas"
-          :class="[
-            'lg:w-72 rounded-md border-gray-400 hover:bg-gray-100',
-            disableFechas ? 'bg-gray-100 cursor-not-allowed' : 'bg-transparent',
-          ]"
-          placeholder="Fecha inicial"
-        />
+      <div class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-6 lg:w-3/4">
+        <!-- Fecha inicial -->
+        <div class="flex w-full lg:w-1/3 flex-col">
+          <label for="fechaInicial" class="text-sm text-gray-600 mb-1"
+            >Fecha inicial</label
+          >
+          <input
+            type="date"
+            v-model="filtros.fechaInicial"
+            id="fechaInicial"
+            :disabled="disableFechas"
+            :class="[
+              'lg:w-full rounded-md border-gray-400 hover:bg-gray-100',
+              disableFechas
+                ? 'bg-gray-100 cursor-not-allowed'
+                : 'bg-transparent',
+            ]"
+            placeholder="Fecha inicial"
+          />
+        </div>
+        <!-- Fecha final -->
+        <div class="flex lg:w-1/3 flex-col">
+          <label for="fechaFinal" class="text-sm text-gray-600 mb-1"
+            >Fecha final</label
+          >
+          <input
+            type="date"
+            v-model="filtros.fechaFinal"
+            id="fechaFinal"
+            :disabled="disableFechas"
+            :class="[
+              'lg:w-full rounded-md border-gray-400 hover:bg-gray-100',
+              disableFechas
+                ? 'bg-gray-100 cursor-not-allowed'
+                : 'bg-transparent',
+            ]"
+            placeholder="Fecha final"
+          />
+        </div>
       </div>
-      <!-- Fecha final -->
-      <div class="flex flex-col">
-        <label for="fechaFinal" class="text-sm text-gray-600 mb-1"
-          >Fecha final</label
-        >
-        <input
-          type="date"
-          v-model="filtros.fechaFinal"
-          id="fechaFinal"
-          :disabled="disableFechas"
-          :class="[
-            'lg:w-72 rounded-md border-gray-400 hover:bg-gray-100',
-            disableFechas ? 'bg-gray-100 cursor-not-allowed' : 'bg-transparent',
-          ]"
-          placeholder="Fecha final"
-        />
-      </div>
-
-      <div class="flex items-end">
-        <button
-          type="button"
-          @click="consultar"
-          id="buscar"
-          class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-md min-w-20 max-w-20 min-h-10 max-h-10 relative"
-        >
-          Buscar
-        </button>
-      </div>
-      <div class="flex items-end">
-        <download-excel
-          v-if="rows.length > 0"
-          class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-md min-w-22 max-w-22 min-h-10 max-h-10 relative cursor-pointer"
-          :data="json_data"
-          :fields="json_fields"
-          worksheet="Datos"
-          :name="`fardos_${new Date().getTime()}.xls`"
-        >
-          Exportar
-        </download-excel>
+      <div class="flex space-x-6 lg:w-3/4">
+        <div class="flex items-end">
+          <button
+            type="button"
+            @click="consultar"
+            id="buscar"
+            class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-md min-w-20 max-w-20 min-h-10 max-h-10 relative"
+          >
+            Buscar
+          </button>
+        </div>
+        <div class="flex items-end">
+          <download-excel
+            v-if="rows.length > 0"
+            class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-md min-w-22 max-w-22 min-h-10 max-h-10 relative cursor-pointer"
+            :data="json_data"
+            :fields="json_fields"
+            worksheet="Datos"
+            :name="`fardos_${new Date().getTime()}.xls`"
+          >
+            Exportar
+          </download-excel>
+        </div>
       </div>
     </div>
     <!-- Table -->
