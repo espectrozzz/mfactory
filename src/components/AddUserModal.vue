@@ -193,6 +193,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { getFunctions, httpsCallable } from "firebase/functions"
 import {
   TransitionRoot,
   TransitionChild,
@@ -202,6 +203,7 @@ import {
 } from "@headlessui/vue";
 
 const props = defineProps(["isOpen"]);
+const functions = getFunctions();
 const emits = defineEmits(["closeModal", "isCreated"]);
 const verifyEmail = ref(false);
 const isLoading = ref(false);
@@ -222,14 +224,43 @@ const rules = {
 const v$ = useVuelidate(rules, userData);
 
 const createUser = async () => {
+  const createUser = httpsCallable(functions, 'createUser');
   isLoading.value = true;
   const result = await v$.value.$validate();
   verifyEmail.value = await validateEmail();
+
   if (!result || verifyEmail.value) {
     isLoading.value = false;
     return false;
   } 
 
+  const data = {
+    nombre: userData.nombre.trim(),
+    apellido_paterno: userData.apellido_paterno.trim(),
+    apellido_materno: userData.apellido_materno.trim(),
+    email: userData.email.trim(),
+    rol: userData.rol,
+    activo: true,
+  }
+
+  await createUser(data).then((result) => {
+    console.log(result);
+    isLoading.value = false;
+    emits("isCreated");
+    closeModal();
+  }).catch((error) => {
+    isLoading.value = false;
+    console.log(`Error: ${error.message} Código: ${error.code}`)
+  })
+
+
+
+
+
+
+
+
+/*
   try {
     const docRef = await addDoc(collection(db, "colaboradores"), {
       nombre: userData.nombre.trim(),
@@ -247,7 +278,7 @@ const createUser = async () => {
     console.log("Error al agregar el documento: ", error);
     isLoading.value = false;
   }
-  
+  */
 };
 
 const validateEmail = async () => {

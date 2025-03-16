@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const crypto = require("crypto");
 const { FieldValue } = require("firebase-admin/firestore");
 
@@ -13,30 +13,6 @@ exports.initApp = functions.auth.user().onCreate((user) => {
 })
 */
 
-exports.createUser = functions.firestore
-  .document("colaboradores/{docId}")
-  .onCreate((snap, context) => {
-    const randomPassword = generateRandomPassword(6);
-    admin
-      .auth()
-      .createUser({
-        email: snap.data().email,
-        emailVerified: true,
-        password: randomPassword,
-        displayName: `${snap.data().nombre} ${snap.data().apellido_paterno}`,
-        disabled: false,
-      })
-      .then((userRecord) => {
-        admin.auth().setCustomUserClaims(userRecord.uid, {
-          rol: snap.data().rol,
-        });
-        admin
-          .firestore()
-          .collection("colaboradores")
-          .doc(snap.id)
-          .update({ uid: userRecord.uid });
-      });
-  });
 
 exports.disableUser = functions.https.onCall(async (data, context) => {
   await admin.auth().updateUser(data.uid, {
@@ -56,6 +32,7 @@ function generateRandomPassword(length) {
   return password;
 }
 
+/*
 exports.initializeInventory = functions.firestore
   .document("tiposDeFardos/{docId}")
   .onCreate((snap, context) => {
@@ -65,6 +42,7 @@ exports.initializeInventory = functions.firestore
       in_stock: false,
     });
   });
+  */
 
 exports.uploadInventory = functions.firestore
   .document("entradas/{docId}")
@@ -74,7 +52,7 @@ exports.uploadInventory = functions.firestore
       admin
         .firestore()
         .collection("inventory")
-        .doc(value.tipoFardo)
+        .doc(value.fardoId)
         .update({
           value: FieldValue.increment(1),
           in_stock: true,
@@ -87,11 +65,11 @@ exports.outgoingInventory = functions.firestore
   .document("salidas/{docId}")
   .onCreate((snap, context) => {
     snap.data().data.forEach(async (value) => {
-      const inventoryItem = await admin.firestore().collection("inventory").doc(value.tipoFardo).get()
+      const inventoryItem = await admin.firestore().collection("inventory").doc(value.fardoId).get()
       admin
         .firestore()
         .collection("inventory")
-        .doc(value.tipoFardo)
+        .doc(value.fardoId)
         .update({
           value: FieldValue.increment(-value.value),
           in_stock: value.value >= inventoryItem.data().value ? false : true,
@@ -99,3 +77,122 @@ exports.outgoingInventory = functions.firestore
         });
     });
   });
+
+// control fardos
+exports.createFardo = functions.https.onCall(async (data) => {
+  const { name, uid, userName } = data;
+  const db = admin.firestore();
+
+  if(!name || !uid || !userName) {
+    throw new functions.https.HttpsError('invalid-argument', 'Faltan datos')
+  }
+
+  try {
+    const tipoFardoRef = await db.collection("tiposDeFardos").add({
+      created_at: FieldValue.serverTimestamp(),
+      name: name,
+      uid: uid,
+      userName: userName
+    });
+
+    await db.collection("inventory").doc(tipoFardoRef.id).set({
+      created_at: FieldValue.serverTimestamp(),
+      in_stock: false,
+      value: 0,
+      name: name
+    });
+
+    return { message: "Fardo creado correctamente", code: 200 };
+    
+  } catch (error) {
+    throw new functions.https.HttpsError('service-invalid', 'El servicio para crear fardos no está disponible.')
+  }
+
+});
+
+exports.updateFardo = functions.https.onCall(async (data) => {
+  const { newName, uid, id } = data;
+  const db = admin.firestore();
+
+  if(!newName || !uid || !id) {
+    throw new functions.https.HttpsError('invalid-argument', 'Faltan datos.');
+  }
+
+  try {
+    await db.collection("tiposDeFardos").doc(id).update({
+      name: newName,
+      updated_at: FieldValue.serverTimestamp(),
+      updated_by: uid
+    });
+
+    await db.collection("inventory").doc(id).update({
+      name: newName
+    })
+  } catch (error) {
+    throw new functions.https.HttpsError('invalid-service', 'Servicio no disponible, intenta más tarde.');
+  }
+});
+
+
+// control usuarios
+
+exports.createUser = functions.https.onCall(async (data, context) => {
+  const randomPassword = generateRandomPassword(6);
+  const { nombre, apellido_paterno, email, rol } = data;
+
+  try {
+    const userRecord = await admin.auth().createUser({
+      email: email,
+      emailVerified: true,
+      password: randomPassword,
+      displayName: `${nombre} ${apellido_paterno}`,
+      disabled: false,
+      rol: rol
+    });
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      rol: rol
+    });
+
+    await admin.firestore().collection("colaboradores").doc(userRecord.uid).set({ ...data, fecha_creacion: FieldValue.serverTimestamp() });
+
+    return { message: "Se creó el usuario con éxito", code: 200 };
+
+  } catch (error) {
+    throw new functions.https.HttpsError('invalid-service', 'Error al crear usuario, intente de nuevo.');
+  }
+});
+
+
+exports.updateUser = functions.https.onCall(async (data, context) => {
+  const { uid, newName, newLastName1, newLastName2, newRol } = data;
+  if (!newName) {
+    throw new functions.https.HttpsError('invalid-argument', 'Se debe proporcionar un nombre.');
+  }
+
+  if (!uid) {
+    throw new functions.https.HttpsError('invalid-argument', 'Identificador de usuario invalido.');
+  }
+
+  const db = admin.firestore();
+  const auth = admin.auth();
+  
+  const userDoc = await db.collection("colaboradores").doc(uid).get();
+  const oldName = userDoc.data().nombre;
+  const oldLastName = userDoc.data().apellido_paterno;
+
+  try {
+    await db.collection("colaboradores").doc(uid).update({ nombre: newName, apellido_paterno: newLastName1, apellido_materno: newLastName2, rol: newRol, fecha_modificacion: FieldValue.serverTimestamp() });
+   
+    await auth.updateUser(uid, { displayName: `${newName} ${newLastName1}` });
+
+    await auth.setCustomUserClaims(uid, {
+      rol: newRol
+    });
+
+    return { message: "Usuario actualizado", code: 200 };
+  } catch (error) {
+    throw new functions.https.HttpsError('invalid', 'Ocurrió un error, intente más tarde.')
+  }
+
+});
