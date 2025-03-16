@@ -1,6 +1,29 @@
 <template>
-  <div class="flex flex-col lg:flex-row space-y-6 lg:space-y-0 justify-around">
-    <svg ref="barcode" class="hidden"></svg>
+  <div class="flex flex-col space-y-4">
+    <div class="hidden">
+      <QRCodeVue3
+      v-if="qrShow"
+      ref="qr"
+      :width="200"
+      :height="200"
+      imgclass="qr-class"
+      :value="qrData"
+      :qrOptions="{ typeNumber: 0, mode: 'Byte', errorCorrectionLevel: 'H' }"
+      :dotsOptions="{
+        type: 'classy',
+        color: '#26249a',
+        gradient: {
+          type: 'linear',
+          rotation: 0,
+          colorStops: [
+            { offset: 0, color: '#26249a' },
+            { offset: 1, color: '#26249a' },
+          ],
+        },
+      }"
+        />
+    </div>
+   
     <div>
       <div
         class="flex flex-col space-y-6 border-2 p-6 lg:w-96 max-w-96 h-60 rounded-md shadow-md relative"
@@ -32,7 +55,7 @@
       </div>
     </div>
     <div
-      class="flex flex-col space-y-4 border-2 rounded-md p-6 w-72 max-w-72 h-72 shadow-md overflow-hidden relative"
+      class="flex flex-col space-y-4 border-2 rounded-md p-6 w-82 max-w-82 h-72 shadow-md overflow-hidden relative"
     >
       <h2 class="text-lg">Tipos de fardos</h2>
       <ul class="overflow-y-auto">
@@ -40,10 +63,17 @@
           v-for="item in listaTipoDeFardos"
           class="flex items-center justify-between border-2 rounded-md p-1 mb-2"
         >
-          <div class="truncate w-3/4">
+          <div class="truncate w-5/6">
             <p :title="item.name">{{ item.name }}</p>
           </div>
           <div class="flex space-x-2">
+            <button
+              type="button"
+              @click="openUpdateFardo(item.id, item.name)"
+              title="Editar nombre"
+            >
+              <PencilSquareIcon class="w-5 h-5" />
+            </button>
             <button
               type="button"
               @click="exportToPDF(item.name)"
@@ -53,7 +83,7 @@
             </button>
             <button
               type="button"
-              @click="eliminarFardo(item.id)"
+              @click="modalDeleteFardo(item.id)"
               title="Eliminar fardo"
             >
               <TrashIcon class="w-5 h-5 text-red-500" />
@@ -67,13 +97,23 @@
         >Fardo eliminado</MessageState
       >
     </div>
+    <ModalConfirm :is-open="isOpen" :loading="loadingDelete" @closeModal="isOpen = false" @confirm="eliminarFardo">
+      <template v-slot:message>
+        <span>¿Estás seguro de eliminar el fardo?</span>
+      </template>
+      <template v-slot:button>
+        <span>Eliminar</span>
+      </template>
+    </ModalConfirm>
+    <TipoFardosUpdate v-if="showUpdateFardo" :is-open="showUpdateFardo" :fardo="fardoSelectedUpdated" @closeModal="showUpdateFardo = false" />
   </div>
 </template>
 
 <script setup>
-import { ref, watchEffect } from "vue";
-import { TrashIcon, TicketIcon } from "@heroicons/vue/24/outline";
-import { db, auth } from "../firebase";
+import { reactive, ref, watchEffect, useTemplateRef} from "vue";
+import { TrashIcon, TicketIcon, PencilSquareIcon } from "@heroicons/vue/24/outline";
+import { db, auth, functions } from "../firebase";
+import { httpsCallable } from "firebase/functions"
 import {
   collection,
   addDoc,
@@ -89,7 +129,12 @@ import Barcode from "./Barcode.vue";
 import JsBarcode from "jsbarcode";
 import jsPDF from "jspdf";
 import IconSpinner from "./icons/IconSpinner.vue";
+import ModalConfirm from "./ModalConfirm.vue";
+import TipoFardosUpdate from "./TipoFardosUpdate.vue";
+import QRCodeVue3 from "qrcode-vue3";
 
+const qrShow = ref(false);
+const qrData = ref("");
 const tipoDeFardo = ref("");
 const listaTipoDeFardos = ref([]);
 const isSuccess = ref(false);
@@ -98,6 +143,14 @@ const ean13Code = ref("1234567890128");
 const barcode = ref(null);
 const q = query(collection(db, "tiposDeFardos"));
 const loading = ref(false);
+const loadingDelete = ref(false);
+const isOpen = ref(false);
+const fardoSelected = ref("");
+const fardoSelectedUpdated = reactive({
+  id: "",
+  name: ""
+})
+const showUpdateFardo = ref(false);
 
 const fetchData = async () => {
   listaTipoDeFardos.value = [];
@@ -116,63 +169,79 @@ onSnapshot(q, (querySnapshot) => {
   fetchData();
 });
 
-const generateBarcode = (tipoDeFardo) => {
-  if (barcode.value) {
-    JsBarcode(barcode.value, tipoDeFardo);
-  }
-};
+const modalDeleteFardo = (docId) => {
+  fardoSelected.value = docId;
+  isOpen.value = true;
+}
 
-const eliminarFardo = async (docId) => {
-  console.log("docId", docId);
-  await deleteDoc(doc(db, "tiposDeFardos", docId)).then(() => {
+const eliminarFardo = async () => {
+  loadingDelete.value = true;
+  await deleteDoc(doc(db, "tiposDeFardos", fardoSelected.value)).then(() => {
     isSuccessDelete.value = true;
+    loadingDelete.value = false;
+    isOpen.value = false;
+    fardoSelected.value = "";
     setTimeout(() => {
       isSuccessDelete.value = false;
     }, 5000);
+  }).catch((error) => {
+    console.log(error);
+    loadingDelete.value = false;
+    fardoSelected.value = "";
   });
 };
 
 const exportToPDF = (tipoDeFardo) => {
-  generateBarcode(tipoDeFardo);
-  const svgElement = barcode.value;
-  const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(svgElement);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  const svg = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(svg);
-  const img = new Image();
-
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
-
-    const imgData = canvas.toDataURL("image/png");
-    const doc = new jsPDF();
-
-    for (let i = 0; i < 4; i++) {
-      const x = 10;
-      const y = 10 + i * 80;
-      doc.addImage(imgData, "PNG", x, y);
+  qrData.value = tipoDeFardo;
+  qrShow.value = true;
+  let canvas = "";
+  const doc = new jsPDF();
+  doc.text(tipoDeFardo, 105, 20, { align: 'center' })
+  setTimeout(() => {
+    canvas = document.querySelector(".qr-class");
+    for (let i = 0; i < 6; i++) {
+      const x = i % 2 === 0 ? 120 : 20;
+      const y = i <= 1 ? 40 : i <= 3 ? 120 : 200;
+      doc.addImage(canvas, "PNG", x, y);
     }
-    doc.save(`barcode_${new Date().getTime()}.pdf`);
-  };
-
-  img.src = url;
+      
+    doc.save(`qrcode_${new Date().getTime()}.pdf`);
+    qrData.value = "";
+    qrShow.value = false;
+  }, 200)
 };
 
 const guardarTipoFardo = async () => {
+  const guardarTipoFardo = httpsCallable(functions, "createFardo");
   loading.value = true;
-  if (tipoDeFardo.value === "" || tipoDeFardo.value.length < 6) {
+  if (tipoDeFardo.value === "" || tipoDeFardo.value.length < 6 || tipoDeFardo.value.length > 25) {
     alert("El tipo de fardo no está permitido.");
     loading.value = false;
     return false;
   }
 
+  const data = {
+    name: tipoDeFardo.value.toUpperCase().trim().replace("/", ""),
+    uid: auth.currentUser.uid,
+    userName: auth.currentUser.displayName,
+  }
+
+  await guardarTipoFardo(data).then((result) => {
+    console.log(result);
+    tipoDeFardo.value = "";
+    isSuccess.value = true;
+    loading.value = false;
+    setTimeout(() => {
+      isSuccess.value = false;
+    }, 5000);
+  }).catch((error) => {
+    loading.value = false;
+    console.log(error);
+  })
+
+  /*
   try {
-    const docRef = await addDoc(collection(db, "tiposDeFardos"), {
+    await addDoc(collection(db, "tiposDeFardos"), {
       name: tipoDeFardo.value.toUpperCase().trim().replace("/", ""),
       uid: auth.currentUser.uid,
       userName: auth.currentUser.displayName,
@@ -188,5 +257,14 @@ const guardarTipoFardo = async () => {
     console.log("error al guardar el tipo de fardo", error);
     loading.value = false;
   }
+    */
 };
+
+const openUpdateFardo = (id, name) => {
+  showUpdateFardo.value = true;
+  fardoSelected.value = id;
+  fardoSelectedUpdated.id = id;
+  fardoSelectedUpdated.name = name;
+
+}
 </script>

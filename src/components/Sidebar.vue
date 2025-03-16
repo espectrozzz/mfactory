@@ -85,7 +85,7 @@
           </li>
         </ul>
       </div>
-      <div class="absolute text-white bottom-0 p-2">v 1.0.0</div>
+      <div class="absolute text-white bottom-0 p-2">v1.2.0</div>
     </div>
   </div>
 </template>
@@ -106,5 +106,5 @@ import { storeToRefs } from "pinia";
 const store = useUserRol();
 const { customClaim } = storeToRefs(store);
 
-//const version = __APP_VERSION__;
+// const version = __APP_VERSION__;
 </script>

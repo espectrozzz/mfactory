@@ -1,6 +1,28 @@
 <template>
   <div>
-    <svg ref="barcode" class="hidden"></svg>
+    <div class="hidden">
+      <QRCodeVue3
+      v-if="qrShow"
+      ref="qr"
+      :width="200"
+      :height="200"
+      imgclass="qr-class"
+      :value="qrData"
+      :qrOptions="{ typeNumber: 0, mode: 'Byte', errorCorrectionLevel: 'H' }"
+      :dotsOptions="{
+        type: 'classy',
+        color: '#26249a',
+        gradient: {
+          type: 'linear',
+          rotation: 0,
+          colorStops: [
+            { offset: 0, color: '#26249a' },
+            { offset: 1, color: '#26249a' },
+          ],
+        },
+      }"
+        />
+    </div>
     <table
       class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400"
     >
@@ -53,46 +75,18 @@ import { getDocs, collection } from "firebase/firestore";
 import { TicketIcon } from "@heroicons/vue/24/outline";
 import JsBarcode from "jsbarcode";
 import jsPDF from "jspdf";
+import QRCodeVue3 from "qrcode-vue3";
 
 const barcode = ref(null);
 const data = ref([]);
 const total = ref(0);
+const qrShow = ref(false);
+const qrData = ref("");
 
 const generateBarcode = (tipoDeFardo) => {
   if (barcode.value) {
     JsBarcode(barcode.value, tipoDeFardo);
   }
-};
-
-const exportToPDF = (tipoDeFardo) => {
-  generateBarcode(tipoDeFardo);
-  const svgElement = barcode.value;
-  const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(svgElement);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  const svg = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(svg);
-  const img = new Image();
-
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
-
-    const imgData = canvas.toDataURL("image/png");
-    const doc = new jsPDF();
-
-    for (let i = 0; i < 4; i++) {
-      const x = 10;
-      const y = 10 + i * 80;
-      doc.addImage(imgData, "PNG", x, y);
-    }
-    doc.save(`barcode_${new Date().getTime()}.pdf`);
-  };
-
-  img.src = url;
 };
 
 const fetchData = async () => {
@@ -106,12 +100,33 @@ const fetchData = async () => {
         total.value += fardo.data().value;
       }
       data.value.push({
-        name: fardo.id,
+        id: fardo.id,
+        name: fardo.data().name,
         value: fardo.data().value,
         in_stock: fardo.data().in_stock,
       });
     });
   }
+};
+
+const exportToPDF = (tipoDeFardo) => {
+  qrData.value = tipoDeFardo;
+  qrShow.value = true;
+  let canvas = "";
+  const doc = new jsPDF();
+  doc.text(tipoDeFardo, 105, 20, { align: 'center' })
+  setTimeout(() => {
+    canvas = document.querySelector(".qr-class");
+    for (let i = 0; i < 6; i++) {
+      const x = i % 2 === 0 ? 120 : 20;
+      const y = i <= 1 ? 40 : i <= 3 ? 120 : 200;
+      doc.addImage(canvas, "PNG", x, y);
+    }
+      
+    doc.save(`qrcode_${new Date().getTime()}.pdf`);
+    qrData.value = "";
+    qrShow.value = false;
+  }, 200)
 };
 
 await fetchData();

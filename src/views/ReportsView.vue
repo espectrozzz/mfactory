@@ -117,7 +117,7 @@ const getEntradaInventario = async () => {
   const q = query(
     collection(db, "entradas"),
     where("creado", ">=", date1),
-    where("creado", "<=", date2)
+    where("creado", "<=", date2),
   );
 
   const querySnapshot = await getDocs(q);
@@ -240,12 +240,11 @@ const getInventario = async () => {
   if (!snapshot.empty) {
     columns.value = ["#", "Tipo de fardo", "Stock", "Ultima actualización"];
     snapshot.forEach((value) => {
-      console.log(value.id);
       rows.value.push({
         id: rows.value.length + 1,
         data: [
           { type: "text", content: rows.value.length + 1 },
-          { type: "text", content: value.id },
+          { type: "text", content: value.data().name },
           { type: "text", content: value.data().value },
           {
             type: "date",

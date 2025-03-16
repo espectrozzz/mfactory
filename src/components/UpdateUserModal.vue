@@ -144,6 +144,7 @@
                         </option>
                         <option value="admin">Administrador</option>
                         <option value="colaborador">Colaborador</option>
+                        <option value="reporteador">Reporteador</option>
                       </select>
                       <p v-for="error of v$.rol?.$errors" :key="error.$uid">
                         <span class="text-red-400 text-sm absolute"
@@ -251,6 +252,7 @@ const fetchData = async () => {
 };
 
 const updateUser = async () => {
+  const updateUser = httpsCallable(functions, "updateUser");
   isLoading.value = true;
   const result = await v$.value.$validate();
   if (!result) {
@@ -258,24 +260,23 @@ const updateUser = async () => {
     return false;
   }
 
-  try {
-    const colaboradorRef = doc(db, "colaboradores", props.data.id);
-    await updateDoc(colaboradorRef, {
-      nombre: userData.nombre,
-      apellido_paterno: userData.apellido_paterno,
-      apellido_materno: userData.apellido_materno,
-      fecha_modificacion: serverTimestamp(),
-    })
-    await updateCurrentUser(auth, { 
-      displayName: `${userData.nombre} ${userData.apellido_paterno}`,
-     })
-    isLoading.value = false;
-    emits("isCreated");
-    closeModal();
-  } catch (error) {
-    console.log("Error al agregar el documento: ", error);
-    isLoading.value = false;
+  const data = {
+    uid: props.data.id,
+    newName: userData.nombre,
+    newLastName1: userData.apellido_paterno,
+    newLastName2: userData.apellido_materno,
+    newRol: userData.rol
   }
+
+  updateUser(data).then((result) => {
+    console.log(result);
+    isLoading.value = false;
+    emits("isUpdated");
+    closeModal();
+  }).catch((error) => {
+    isLoading.value = false;
+    console.log(`Error: ${error.message} Código: ${error.code}`);
+  })
 };
 
 const validateEmail = async () => {

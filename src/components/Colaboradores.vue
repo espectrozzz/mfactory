@@ -11,6 +11,7 @@ import MessageState from "@/components/MessageState.vue";
 const isOpenCreateUser = ref(false);
 const isOpenUpdateUser = ref(false);
 const loading = ref(false);
+const messageState = ref("");
 
 const columns = [
   "Nombre del colaborador",
@@ -20,7 +21,7 @@ const columns = [
   "",
 ];
 
-const isNewUser = ref(false);
+const showMessageState = ref(false);
 const data = ref();
 const rows = ref([]);
 
@@ -83,12 +84,21 @@ const closeUpdateUserModal = () => {
   isOpenUpdateUser.value = false;
 };
 
-const isCreated = (n) => {
-  isNewUser.value = true;
+const isCreated = () => {
+  messageState.value = "Se agregó correctamente al colaborador.";
+  showMessageState.value = true;
   setTimeout(() => {
-    isNewUser.value = false;
+    showMessageState.value = false;
   }, 5000);
 };
+
+const isUpdated = () => {
+  messageState.value = "Se actualizó correctamente al colaborador.";
+  showMessageState.value = true;
+  setTimeout(() => {
+    showMessageState.value = false;
+  }, 5000);
+}
 
 const updateUser = (dataClick) => {
   data.value = dataClick;
@@ -109,7 +119,7 @@ const updateUser = (dataClick) => {
       >
         <UserPlusIcon class="w-5 mr-2" /> Agregar colaborador
       </button>
-      <MessageState :isShow="isNewUser">Se agregó correctamente al colaborador</MessageState>
+      <MessageState :isShow="showMessageState">{{ messageState }}</MessageState>
     </div>
     <!-- Table -->
     <div>
@@ -133,6 +143,7 @@ const updateUser = (dataClick) => {
         :isOpen="isOpenUpdateUser"
         :data="data"
         @closeModal="closeUpdateUserModal"
+        @isUpdated="isUpdated"
       />
     </Suspense>
   </div>
