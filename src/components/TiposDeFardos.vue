@@ -223,7 +223,7 @@ const guardarTipoFardo = async () => {
   const data = {
     name: tipoDeFardo.value.toUpperCase().trim().replace("/", ""),
     uid: auth.currentUser.uid,
-    userName: auth.currentUser.displayName,
+    userName: auth.currentUser.displayName || 'Admin Admin',
   }
 
   await guardarTipoFardo(data).then((result) => {

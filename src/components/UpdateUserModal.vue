@@ -135,6 +135,7 @@
                         >Rol</label
                       >
                       <select
+                        :disabled="customClaim === 'admin' ? true : false"
                         v-model="userData.rol"
                         id="countries"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -206,6 +207,11 @@ import {
 } from "@headlessui/vue";
 import { updateCurrentUser } from "firebase/auth"
 import { httpsCallable } from "firebase/functions"
+import { useUserRol } from "@/stores/user";
+import { storeToRefs } from "pinia";
+
+const store = useUserRol();
+const { customClaim } = storeToRefs(store);
 
 const props = defineProps(["isOpen", "data"]);
 const disableFunction = httpsCallable(functions, "disableUser")
