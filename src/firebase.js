@@ -24,9 +24,6 @@ const appCheck = initializeAppCheck(app, {
   isTokenAutoRefreshEnabled: true
 });
 
-
-console.log("APPCHECK", appCheck)
-
 /*
 connectAuthEmulator(auth, "http://127.0.0.1:9099");
 connectFirestoreEmulator(db, "localhost", 8080);

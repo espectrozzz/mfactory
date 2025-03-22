@@ -150,7 +150,7 @@ const getEntradaInventario = async () => {
         data: [
           { type: "text", content: rows.value.length + 1 },
           { type: "text", content: doc.data().data[fardo].tipoFardo },
-          { type: "text", content: doc.data().colaborador },
+          { type: "text", content: doc.data().colaborador || 'Admin' },
           { type: "date", content: doc.data().creado.toDate() },
           { type: "text", content: "Entrada" },
         ],
@@ -158,7 +158,7 @@ const getEntradaInventario = async () => {
       json_data.value.push({
         id: rows.value.length,
         tipoFardo: doc.data().data[fardo].tipoFardo,
-        colaborador: doc.data().colaborador,
+        colaborador: doc.data().colaborador || 'Admin',
         fecha: convertDate(doc.data().creado.toDate()),
         movimiento: "Entrada",
       });
@@ -213,7 +213,7 @@ const getSalidaInventario = async () => {
         data: [
           { type: "text", content: rows.value.length + 1 },
           { type: "text", content: doc.data().data[fardo].tipoFardo },
-          { type: "text", content: doc.data().colaborador },
+          { type: "text", content: doc.data().colaborador || 'Admin' },
           { type: "text", content: doc.data().data[fardo].value },
           { type: "text", content: doc.data().destiny },
           { type: "date", content: doc.data().creado.toDate() },
@@ -223,9 +223,9 @@ const getSalidaInventario = async () => {
       json_data.value.push({
         id: rows.value.length,
         tipoFardo: doc.data().data[fardo].tipoFardo,
-        colaborador: doc.data().colaborador,
+        colaborador: doc.data().colaborador || 'Admin',
         cantidad: doc.data().data[fardo].value,
-        colaborador: doc.data().destiny,
+        destino: doc.data().destiny,
         fecha: convertDate(doc.data().creado.toDate()),
         movimiento: "Salida",
       });
@@ -263,7 +263,7 @@ const getInventario = async () => {
       };
       json_data.value.push({
         id: rows.value.length,
-        tipoFardo: value.id,
+        tipoFardo: value.data().name,
         stock: value.data().value,
         fecha: value.data().hasOwnProperty("updated_at")
           ? convertDate(value.data()?.updated_at.toDate())
@@ -385,7 +385,8 @@ onMounted(() => {
             :data="json_data"
             :fields="json_fields"
             worksheet="Datos"
-            :name="`fardos_${new Date().getTime()}.xls`"
+            type="xlsx"
+            :name="`fardos_${new Date().getTime()}.xlsx`"
           >
             Exportar
           </download-excel>
