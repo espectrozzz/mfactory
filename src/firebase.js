@@ -19,14 +19,17 @@ const auth = getAuth();
 const db = getFirestore();
 const functions = getFunctions(app)
 
+
 const appCheck = initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider('6LeJ1PUqAAAAADGPvPjCxDuIbB_PS9DvEm3ygK3v'),
   isTokenAutoRefreshEnabled: true
 });
 
+
 /*
 connectAuthEmulator(auth, "http://127.0.0.1:9099");
 connectFirestoreEmulator(db, "localhost", 8080);
-connectFunctionsEmulator(functions, "localhost", 5001)
+connectFunctionsEmulator(functions, "localhost", 5001);
 */
-export { auth, db, functions, appCheck };
+
+export { auth, db, functions };

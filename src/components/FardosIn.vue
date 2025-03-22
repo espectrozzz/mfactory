@@ -4,95 +4,96 @@
       <h2 class="text-2xl">Entrada De Fardos</h2>
     </div>
     <div class="py-4">
-      <button type="button" @click="$router.push({ 'name': 'fardos' })" class="inline-flex justify-center items-center cursor-pointer"><ArrowLeftIcon class="w-5 h-5 mr-2" /> Regresar</button>
+      <button
+        type="button"
+        @click="$router.push({ name: 'fardos' })"
+        class="inline-flex justify-center items-center cursor-pointer"
+      >
+        <ArrowLeftIcon class="w-5 h-5 mr-2" /> Regresar
+      </button>
     </div>
-    <div class="flex space-x-6">
+    <div
+      class="flex flex-col gap-y-5 lg:gap-y-0 md:gap-y-0 lg:flex-row md:flex-row lg:space-x-6 md:space-x-6"
+    >
       <Combobox v-model="selected">
-          <div class="relative mt-1">
-            <div
-              class="relative w-full input-headless cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm"
+        <div class="relative mt-1">
+          <div
+            class="relative w-full input-headless cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm"
+          >
+            <ComboboxInput
+              class="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0"
+              :displayValue="(fardo) => fardo.name"
+              @change="query2 = $event.target.value"
+              @keyup.enter="validateFardo($event)"
+            />
+            <ComboboxButton
+              class="absolute inset-y-0 right-0 flex items-center pr-2"
             >
-              <ComboboxInput
-                class="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0"
-                :displayValue="(fardo) => fardo.name"
-                @change="query2 = $event.target.value"
+              <ChevronUpDownIcon
+                class="h-5 w-5 text-gray-400"
+                aria-hidden="true"
               />
-              <ComboboxButton
-                class="absolute inset-y-0 right-0 flex items-center pr-2"
-              >
-                <ChevronUpDownIcon
-                  class="h-5 w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-              </ComboboxButton>
-            </div>
-            <TransitionRoot
-              leave="transition ease-in duration-100"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
-              @after-leave="query2 = ''"
+            </ComboboxButton>
+          </div>
+          <TransitionRoot
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+            @after-leave="query2 = ''"
+          >
+            <ComboboxOptions
+              class="absolute mt-1 max-h-60 w-full overflow-auto z-50 rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
             >
-              <ComboboxOptions
-                class="absolute mt-1 max-h-60 w-full overflow-auto z-50 rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
+              <div
+                v-if="filteredFardo.length === 0 && query2 !== ''"
+                class="relative cursor-default select-none px-4 py-2 text-gray-700"
               >
-                <div
-                  v-if="filteredFardo.length === 0 && query2 !== ''"
-                  class="relative cursor-default select-none px-4 py-2 text-gray-700"
-                >
-                  No hay coincidencias
-                </div>
+                No hay coincidencias
+              </div>
 
-                <ComboboxOption
-                  v-for="fardo in filteredFardo"
-                  as="template"
-                  :key="fardo.id"
-                  :value="fardo"
-                  v-slot="{ selected, active }"
+              <ComboboxOption
+                v-for="fardo in filteredFardo"
+                as="template"
+                :key="fardo.id"
+                :value="fardo"
+                v-slot="{ selected, active }"
+              >
+                <li
+                  class="relative cursor-default select-none py-2 pl-2 pr-4"
+                  :class="{
+                    'bg-blue-500 text-white': active,
+                    'text-gray-900': !active,
+                  }"
                 >
-                  <li
-                    class="relative cursor-default select-none py-2 pl-10 pr-4"
+                  <span
+                    class="block truncate"
                     :class="{
-                      'bg-blue-500 text-white': active,
-                      'text-gray-900': !active,
+                      'font-medium': selected,
+                      'font-normal': !selected,
                     }"
                   >
-                    <span
-                      class="block truncate"
-                      :class="{
-                        'font-medium': selected,
-                        'font-normal': !selected,
-                      }"
-                    >
-                      {{ fardo.name }}
-                    </span>
-                    <span
-                      v-if="selected"
-                      class="absolute inset-y-0 left-0 flex items-center pl-3"
-                      :class="{
-                        'text-white': active,
-                        'text-blue-600': !active,
-                      }"
-                    >
-                      <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                    </span>
-                  </li>
-                </ComboboxOption>
-              </ComboboxOptions>
-            </TransitionRoot>
-          </div>
-        </Combobox>
-      <button
-        @click="agregarFardo"
-        type="button"
-        :class="[
-          'bg-blue-500 hover:bg-blue-400 text-white px-4 rounded-md',
-          isLoading ? 'cursor-not-allowed' : '',
-        ]"
-        :disabled="isLoading"
-        id="agregar"
-      >
-        Agregar
-      </button>
+                    {{ fardo.name }}
+                  </span>
+                </li>
+              </ComboboxOption>
+            </ComboboxOptions>
+          </TransitionRoot>
+        </div>
+      </Combobox>
+      <div class="flex w-full">
+        <button
+          @click="agregarFardo"
+          type="button"
+          :class="[
+            'bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-md w-full lg:w-fit md:w-fit',
+            isLoading ? 'cursor-not-allowed' : '',
+          ]"
+          :disabled="isLoading"
+          id="agregar"
+        >
+          Agregar
+        </button>
+      </div>
       <MessageState :isShow="success">Se guardó correctamente</MessageState>
     </div>
     <!-- Table -->
@@ -116,8 +117,13 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { auth, db } from "../firebase";
-import { collection, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
-import { ArrowLeftIcon } from "@heroicons/vue/24/outline"
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDocs,
+} from "firebase/firestore";
+import { ArrowLeftIcon } from "@heroicons/vue/24/outline";
 import TableComponent from "@/components/TableComponent.vue";
 import IconSpinner from "@/components/icons/IconSpinner.vue";
 import MessageState from "@/components/MessageState.vue";
@@ -156,15 +162,28 @@ let filteredFardo = computed(() =>
 
 const rows = ref([]);
 
+const validateFardo = (event) => {
+  if (!event.target.value) {
+    return false;
+  }
+  const exist = tipoFardos.value.some((fardo) => {
+    return fardo.name === event.target.value;
+  });
+
+  if (exist) {
+    agregarFardo();
+  }
+};
+
 const agregarFardo = () => {
   const dateNow = Date.now();
 
   const inputElement = document.querySelector(".input-headless > input");
 
-  if(!selected.value) {
+  if (!selected.value) {
     return 0;
   }
- // const cleanFardo = cleanTipoFardo();
+  // const cleanFardo = cleanTipoFardo();
 
   data.value.push({
     id: rows.value.length + 1,
@@ -215,25 +234,19 @@ const fetchTipoFardos = async () => {
 
   const snapshot = await getDocs(tipoFardosRef);
 
-  if(!snapshot.empty) {
+  if (!snapshot.empty) {
     snapshot.forEach((fardo) => {
       tipoFardos.value.push({
         id: fardo.id,
-        ...fardo.data()
+        ...fardo.data(),
       });
-    })
+    });
   }
-}
+};
 
 onMounted(() => {
   fetchTipoFardos();
   const inputElement = document.querySelector(".input-headless > input");
   inputElement.focus();
-  inputElement.addEventListener("keypress", (e) => {
-    if(e.key === "Enter") {
-      agregarFardo();
-    }
-  })
-
-})
+});
 </script>
