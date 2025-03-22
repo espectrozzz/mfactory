@@ -118,6 +118,7 @@ const getEntradaInventario = async () => {
     collection(db, "entradas"),
     where("creado", ">=", date1),
     where("creado", "<=", date2),
+    where("from", country.value ? "==" : "!=", country.value ? country.value : "")
   );
 
   const querySnapshot = await getDocs(q);
@@ -131,6 +132,7 @@ const getEntradaInventario = async () => {
     "#",
     "Tipo de fardo",
     "Colaborador",
+    "Proveniente de",
     "Fecha/hora escaneo",
     "Movimiento",
   ];
@@ -139,6 +141,7 @@ const getEntradaInventario = async () => {
     "#": "id",
     "Tipo de fardo": "tipoFardo",
     Colaborador: "colaborador",
+    "Proveniente de": "provenienteDe",
     Fecha: "fecha",
     Movimiento: "movimiento",
   };
@@ -151,6 +154,7 @@ const getEntradaInventario = async () => {
           { type: "text", content: rows.value.length + 1 },
           { type: "text", content: doc.data().data[fardo].tipoFardo },
           { type: "text", content: doc.data().colaborador || 'Admin' },
+          { type: "text", content: doc.data().from || "No definido" },
           { type: "date", content: doc.data().creado.toDate() },
           { type: "text", content: "Entrada" },
         ],
@@ -159,6 +163,7 @@ const getEntradaInventario = async () => {
         id: rows.value.length,
         tipoFardo: doc.data().data[fardo].tipoFardo,
         colaborador: doc.data().colaborador || 'Admin',
+        provenienteDe: doc.data().from,
         fecha: convertDate(doc.data().creado.toDate()),
         movimiento: "Entrada",
       });
@@ -315,7 +320,7 @@ onMounted(() => {
           <CountrySelectSuspense v-if="loadingCountries" />
           <select
             v-else
-            :disabled="disableFechas || tipoReporte === 'entradaInventario'"
+            :disabled="disableFechas"
             v-model="country"
             id="countries"
             class="bg-gray-50 border border-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
