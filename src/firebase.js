@@ -32,4 +32,4 @@ connectFirestoreEmulator(db, "localhost", 8080);
 connectFunctionsEmulator(functions, "localhost", 5001);
 */
 
-export { auth, db, functions };
+export { auth, db, functions, appCheck };

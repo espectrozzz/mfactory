@@ -14,7 +14,7 @@
     </div>
     <div class="flex flex-col gap-y-5 lg:gap-y-0 md:gap-y-0 lg:flex-row md:flex-row lg:space-x-6 md:space-x-6">
       <Combobox v-model="selected">
-        <div class="relative mt-1 lg:w-[30%]">
+        <div class="relative mt-1 lg:w-[25%] md:w-[25%]">
           <div
             class="relative w-full input-headless cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm"
           >
@@ -95,7 +95,7 @@
           </option>
         </select>
       </div>
-      <div class="flex w-full">
+      <div class="flex w-fit">
         <button
           @click="agregarFardo"
           type="button"
@@ -109,7 +109,9 @@
           Agregar
         </button>
       </div>
-      <MessageState :isShow="success">Se guardó correctamente</MessageState>
+      <div>
+        <MessageState :isShow="success">Se guardó correctamente</MessageState>
+      </div>
     </div>
     <!-- Table -->
     <div class="mt-6">
