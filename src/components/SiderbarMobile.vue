@@ -124,7 +124,7 @@
                     </li>
                   </ul>
                 </div>
-                <div class="absolute text-white bottom-0 p-2">v1.3.0</div>
+                <div class="absolute text-white bottom-0 p-2">v1.3.1</div>
               </div>
             </DialogPanel>
           </TransitionChild>
