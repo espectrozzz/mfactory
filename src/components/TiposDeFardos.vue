@@ -4,8 +4,8 @@
       <QRCodeVue3
       v-if="qrShow"
       ref="qr"
-      :width="200"
-      :height="200"
+      :width="108"
+      :height="70"
       imgclass="qr-class"
       :value="qrData"
       :qrOptions="{ typeNumber: 0, mode: 'Byte', errorCorrectionLevel: 'H' }"
@@ -195,15 +195,15 @@ const exportToPDF = (tipoDeFardo) => {
   qrData.value = tipoDeFardo;
   qrShow.value = true;
   let canvas = "";
+  let x, y = 0
   const doc = new jsPDF();
-  doc.text(tipoDeFardo, 105, 20, { align: 'center' })
+  doc.setFontSize(5);
+  doc.text(tipoDeFardo, 3, 25, { angle: 90, renderingMode: "stroke" });
   setTimeout(() => {
     canvas = document.querySelector(".qr-class");
-    for (let i = 0; i < 6; i++) {
-      const x = i % 2 === 0 ? 120 : 20;
-      const y = i <= 1 ? 40 : i <= 3 ? 120 : 200;
-      doc.addImage(canvas, "PNG", x, y);
-    }
+    x = 18;
+    y = 8;
+    doc.addImage(canvas, "PNG", x,y, 18,10, "SLOW", "NONE", 90);
       
     doc.save(`qrcode_${new Date().getTime()}.pdf`);
     qrData.value = "";
@@ -238,26 +238,6 @@ const guardarTipoFardo = async () => {
     loading.value = false;
     console.log(error);
   })
-
-  /*
-  try {
-    await addDoc(collection(db, "tiposDeFardos"), {
-      name: tipoDeFardo.value.toUpperCase().trim().replace("/", ""),
-      uid: auth.currentUser.uid,
-      userName: auth.currentUser.displayName,
-      created_at: serverTimestamp(),
-    });
-    tipoDeFardo.value = "";
-    isSuccess.value = true;
-    loading.value = false;
-    setTimeout(() => {
-      isSuccess.value = false;
-    }, 5000);
-  } catch (error) {
-    console.log("error al guardar el tipo de fardo", error);
-    loading.value = false;
-  }
-    */
 };
 
 const openUpdateFardo = (id, name) => {

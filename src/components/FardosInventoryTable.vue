@@ -113,15 +113,15 @@ const exportToPDF = (tipoDeFardo) => {
   qrData.value = tipoDeFardo;
   qrShow.value = true;
   let canvas = "";
+  let x, y = 0
   const doc = new jsPDF();
-  doc.text(tipoDeFardo, 105, 20, { align: 'center' })
+  doc.setFontSize(5);
+  doc.text(tipoDeFardo, 3, 25, { angle: 90, renderingMode: "stroke" });
   setTimeout(() => {
     canvas = document.querySelector(".qr-class");
-    for (let i = 0; i < 6; i++) {
-      const x = i % 2 === 0 ? 120 : 20;
-      const y = i <= 1 ? 40 : i <= 3 ? 120 : 200;
-      doc.addImage(canvas, "PNG", x, y);
-    }
+    x = 18;
+    y = 8;
+    doc.addImage(canvas, "PNG", x,y, 18,10, "SLOW", "NONE", 90);
       
     doc.save(`qrcode_${new Date().getTime()}.pdf`);
     qrData.value = "";
