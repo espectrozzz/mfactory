@@ -85,7 +85,7 @@
           </li>
         </ul>
       </div>
-      <div class="absolute text-white bottom-0 p-2">v1.4.0</div>
+      <div class="absolute text-white bottom-0 p-2">v1.5.1</div>
     </div>
   </div>
 </template>
